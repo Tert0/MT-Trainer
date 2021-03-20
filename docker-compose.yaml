@@ -1,0 +1,27 @@
+version: '3.9'
+services:
+  mt-trainer-backend:
+    build: .
+    restart: always
+    ports:
+      - 9119:80
+    environment:
+      - 'PORT=80'
+      - 'RELOAD=False'
+      - 'SERVER_LOCATION=postgres://postgres-db'
+      - 'DATABASE=mt-trainer'
+      - 'DB_USERNAME=mttrainer'
+      - 'DB_PASSWORD=Secret'
+    depends_on:
+      - postgres-db
+    volumes:
+      - './postgres_data:/var/lib/postgresql/data'
+
+
+  postgres-db:
+    image: postgres:alpine
+    restart: always
+    environment:
+      - 'POSTGRES_USER=mttrainer'
+      - 'POSTGRES_PASSWORD=Secret'
+      - 'POSTGRES_DB=mt-trainer'
