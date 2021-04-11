@@ -1,10 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import db
-from app.models import Statistics, Exercises
+from database import db
+from models import LogEntry, Exercises
 import uvicorn
 import random
 from dotenv import load_dotenv
+
 load_dotenv()
 import os
 
@@ -29,19 +30,19 @@ async def ping():
     return 'Pong!'
 
 
-@app.post('/statistics/add')
-async def statistics_add(factor1: int, factor2: int, user_result: int, duration: int):
-    db.add(Statistics(0, factor1, factor2, user_result, factor1 * factor2 == user_result, duration))
+@app.post('/log/add')
+async def log_add(factor1: int, factor2: int, user_result: int, duration: int):
+    db.add(LogEntry(0, factor1, factor2, user_result, factor1 * factor2 == user_result, duration))
     db.commit()
     return {
-        'message': 'Created Statistic',
+        'message': 'Created Log',
         'status': 201
     }
 
 
-@app.get('/statistics/get')
-async def statistics_get():
-    result: list[Statistics] = db.query(Statistics).filter(Statistics.user_id == 0).all()
+@app.get('/log/get')
+async def log_get():
+    result: list[LogEntry] = db.query(LogEntry).filter(LogEntry.user_id == 0).all()
     return [
         {
             'id': row.id,
@@ -105,9 +106,5 @@ async def get_exercise():
 
 
 
-
-
-
-
 if __name__ == '__main__':
-    uvicorn.run('app.main:app', host='0.0.0.0', port=ENV_PORT, reload=ENV_RELOAD)
+    uvicorn.run('main:app', host='0.0.0.0', port=ENV_PORT, reload=ENV_RELOAD)
