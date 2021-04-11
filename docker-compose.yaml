@@ -8,14 +8,12 @@ services:
     environment:
       - 'PORT=80'
       - 'RELOAD=False'
-      - 'SERVER_LOCATION=postgres://postgres-db'
+      - 'SERVER_LOCATION=postgresql://postgres-db'
       - 'DATABASE=mt-trainer'
       - 'DB_USERNAME=mttrainer'
       - 'DB_PASSWORD=Secret'
     depends_on:
       - postgres-db
-    volumes:
-      - './postgres_data:/var/lib/postgresql/data'
 
 
   postgres-db:
@@ -25,3 +23,7 @@ services:
       - 'POSTGRES_USER=mttrainer'
       - 'POSTGRES_PASSWORD=Secret'
       - 'POSTGRES_DB=mt-trainer'
+    volumes:
+      - './postgres_data:/var/lib/postgresql/data'
+    ports:
+      - 5433:5432
