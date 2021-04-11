@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from database import db
-from models import LogEntry, Exercises
+from app.database import db
+from app.models import LogEntry, Exercises
 import uvicorn
 import random
 from dotenv import load_dotenv
@@ -107,4 +107,4 @@ async def get_exercise():
 
 
 if __name__ == '__main__':
-    uvicorn.run('main:app', host='0.0.0.0', port=ENV_PORT, reload=ENV_RELOAD)
+    uvicorn.run('app.main:app', host='0.0.0.0', port=ENV_PORT, reload=ENV_RELOAD)

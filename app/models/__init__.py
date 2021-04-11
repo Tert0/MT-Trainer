@@ -1,2 +1,2 @@
-from .statistics import Statistics
+from .log import LogEntry
 from .exercises import Exercises

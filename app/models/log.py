@@ -1,4 +1,4 @@
-from database import db
+from app.database import db
 from sqlalchemy import Integer, Column, Boolean, BigInteger
 from time import time as time_now
 
