@@ -1,10 +1,11 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import db
-from app.models import LogEntry, Exercises
+from app.models import LogEntry, Exercises, Evaluation
 import uvicorn
 import random
 from dotenv import load_dotenv
+from collections import Counter
 
 load_dotenv()
 import os
@@ -23,6 +24,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+async def generateExercise():
+    evaluation_query = db.query(Evaluation).filter(Evaluation.user_id == 0).order_by(Evaluation.points.asc())
+    exercises = []
+    if len(evaluation_query.all()) >= 3:
+        for evaluation in evaluation_query.all()[:3]:
+            exercises.append({"factor1": evaluation.factor1, "factor2": evaluation.factor2})
+    exercises.append({"factor1": random.randint(2, 10), "factor2": random.randint(2, 10)})
+    return random.choice(exercises)
 
 
 @app.get('/ping')
@@ -56,11 +66,24 @@ async def log_get():
         for row in result
     ]
 
+@app.get('/evaluations/get')
+async def evaluations_get():
+    evaluations = db.query(Evaluation).filter(Evaluation.user_id == 0).order_by(Evaluation.points.asc()).all()
+    return [
+        {
+            "factor1": evaluation.factor1,
+            "factor2": evaluation.factor2,
+            "points": evaluation.points,
+            "count": evaluation.count,
+        }
+        for evaluation in evaluations
+    ]
+
+
 
 @app.get('/exercise/generate')
 async def generate_exercise():
-    factor1 = random.randint(2, 10)
-    factor2 = random.randint(2, 10)
+    factor1, factor2 = (await generateExercise()).values()
     if db.query(Exercises).filter(Exercises.user_id == 0).first() is None:
         db.add(Exercises(0, factor1, factor2))
     else:
@@ -82,6 +105,21 @@ async def check_exercise(user_result: int):
             'status': 400,
             'message': 'Exercise does not exists'
         }
+    duration = 1 # TODO Measure Duration in the backend
+    points = 1 # TODO Calculate Points with the Duration
+    evaluation = db.query(Evaluation).filter(Evaluation.user_id == 0,
+                                             Evaluation.factor1 == exercise.factor1,
+                                             Evaluation.factor2 == exercise.factor2).first()
+    if evaluation is None:
+        evaluation = Evaluation(0, exercise.factor1, exercise.factor2, points)
+        db.add(evaluation)
+        db.commit()
+    else:
+        db.query(Evaluation).filter(Evaluation.id == evaluation.id).update({
+            Evaluation.points: evaluation.points + points,
+            Evaluation.count: evaluation.count + 1,
+        })
+    db.commit()
     return {
         'status': 200,
         'result': exercise.result == user_result
