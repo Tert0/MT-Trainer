@@ -68,7 +68,7 @@ async def log_get():
 
 @app.get('/evaluations/get')
 async def evaluations_get():
-    evaluations = db.query(Evaluation).filter(Evaluation.user_id == 0).order_by(Evaluation.points.asc()).all()
+    evaluations = db.query(Evaluation).filter(Evaluation.user_id == 0).order_by(Evaluation.points.desc()).all()
     return [
         {
             "factor1": evaluation.factor1,
@@ -106,7 +106,7 @@ async def check_exercise(user_result: int):
             'message': 'Exercise does not exists'
         }
     duration = 1 # TODO Measure Duration in the backend
-    points = 1 # TODO Calculate Points with the Duration
+    points = 1 if exercise.result == user_result else 0# TODO Calculate Points with the Duration
     evaluation = db.query(Evaluation).filter(Evaluation.user_id == 0,
                                              Evaluation.factor1 == exercise.factor1,
                                              Evaluation.factor2 == exercise.factor2).first()
