@@ -8,3 +8,7 @@ SQLAlchemy
 starlette
 typing-extensions
 uvicorn
+pyjwt
+passlib
+redis
+python-multipart
