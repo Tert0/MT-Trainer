@@ -35,7 +35,7 @@ app.add_middleware(
 
 @app.get("/secret")
 async def secret(user=Depends(get_user)):
-    return f'Hello {user["username"]}!'
+    return f'Hello {user.username}!'
 
 
 if __name__ == '__main__':

@@ -1,13 +1,14 @@
-from fastapi import APIRouter
-from app.models import Exercises, Evaluation
+from fastapi import APIRouter, Depends
+from app.models import Exercises, Evaluation, User
 from app.database import db
 import random
+from app.auth import get_user
 
 router = APIRouter(tags=["exercise"])
 
 
-async def generateExercise():
-    evaluation_query = db.query(Evaluation).filter(Evaluation.user_id == 0).order_by(Evaluation.points.asc())
+async def generateExercise(user_id):
+    evaluation_query = db.query(Evaluation).filter(Evaluation.user_id == user_id).order_by(Evaluation.points.asc())
     exercises = []
     if len(evaluation_query.all()) >= 3:
         for evaluation in evaluation_query.all()[:3]:
@@ -17,14 +18,15 @@ async def generateExercise():
 
 
 @router.get('/exercise/generate')
-async def generate_exercise():
-    factor1, factor2 = (await generateExercise()).values()
-    if db.query(Exercises).filter(Exercises.user_id == 0).first() is None:
-        db.add(Exercises(0, factor1, factor2))
+async def generate_exercise(user=Depends(get_user)):
+    factor1, factor2 = (await generateExercise(user.id)).values()
+    if db.query(Exercises).filter(Exercises.user_id == user.id).first() is None:
+        user_db = db.query(User).filter(User.id == user.id).first()
+        db.add(Exercises(user_db, factor1, factor2))
     else:
-        db.query(Exercises).filter(Exercises.user_id == 0).update({Exercises.factor1: factor1,
-                                                                   Exercises.factor2: factor2,
-                                                                   Exercises.result: factor1 * factor2})
+        db.query(Exercises).filter(Exercises.user_id == user.id).update({Exercises.factor1: factor1,
+                                                                            Exercises.factor2: factor2,
+                                                                            Exercises.result: factor1 * factor2})
     db.commit()
     return {
         'factor1': factor1,
@@ -33,8 +35,8 @@ async def generate_exercise():
 
 
 @router.post('/exercise/check')
-async def check_exercise(user_result: int):
-    exercise: Exercises = db.query(Exercises).filter(Exercises.user_id == 0).first()
+async def check_exercise(user_result: int, user=Depends(get_user)):
+    exercise: Exercises = db.query(Exercises).filter(Exercises.user_id == user.id).first()
     if exercise is None:
         return {
             'status': 400,
@@ -46,7 +48,8 @@ async def check_exercise(user_result: int):
                                              Evaluation.factor1 == exercise.factor1,
                                              Evaluation.factor2 == exercise.factor2).first()
     if evaluation is None:
-        evaluation = Evaluation(0, exercise.factor1, exercise.factor2, points)
+        user = db.query(User).filter(User.id == user.id).first()
+        evaluation = Evaluation(user, exercise.factor1, exercise.factor2, points)
         db.add(evaluation)
         db.commit()
     else:
@@ -62,8 +65,9 @@ async def check_exercise(user_result: int):
 
 
 @router.get('/exercise/get')
-async def get_exercise():
-    exercise: Exercises = db.query(Exercises).filter(Exercises.user_id == 0).first()
+async def get_exercise(user=Depends(get_user)):
+    print(f'USERID:{user.id}')
+    exercise: Exercises = db.query(Exercises).filter(Exercises.user_id == user.id).first()
     if exercise is None:
         return {
             'status': 400,

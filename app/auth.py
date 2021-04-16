@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta
 import jwt
 from fastapi import HTTPException, Depends
+from collections import namedtuple
 from dotenv import load_dotenv
 load_dotenv()
 import os
@@ -32,4 +33,6 @@ def get_user(token: str = Depends(oauth2_scheme)):
         data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except jwt.exceptions.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail='Token is expired')
-    return data['user']
+    data_struct = namedtuple('user', data['user'].keys())
+    user = data_struct(**data['user'])
+    return user
