@@ -1,10 +1,10 @@
 from passlib.context import CryptContext
-from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta
 import jwt
 from fastapi import HTTPException, Depends
 from collections import namedtuple
 from dotenv import load_dotenv
+from fastapi.security import HTTPBearer
 load_dotenv()
 import os
 
@@ -14,7 +14,11 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", 2
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+bearer_scheme = HTTPBearer()
+
+
+def get_token(token=Depends(bearer_scheme)):
+    return str(token.credentials)
 
 
 def create_access_token(data: dict, expires_delta=None):
@@ -28,7 +32,7 @@ def create_access_token(data: dict, expires_delta=None):
     return encoded_jwt
 
 
-def get_user(token: str = Depends(oauth2_scheme)):
+def get_user(token: str = Depends(get_token)):
     try:
         data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except jwt.exceptions.ExpiredSignatureError:
