@@ -27,6 +27,6 @@ async def register_user(username: str, password: str):
     db.commit()
     return Response('Created User.', 201)
 
-@router.get('/authenicated')
+@router.get('/authenticated')
 async def test_authenication(_=Depends(get_user)):
     return "true"
