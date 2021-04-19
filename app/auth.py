@@ -35,7 +35,7 @@ def create_access_token(data: dict, expires_delta=None):
 def get_user(token: str = Depends(get_token)):
     try:
         data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except jwt.exceptions.ExpiredSignatureError:
+    except:
         raise HTTPException(status_code=401, detail='Token is expired')
     data_struct = namedtuple('user', data['user'].keys())
     user = data_struct(**data['user'])

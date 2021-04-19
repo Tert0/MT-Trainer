@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response, Depends
 from app.models import User
 from app.database import db
-from app.auth import pwd_context, create_access_token
+from app.auth import pwd_context, create_access_token, bearer_scheme, get_user
 
 router = APIRouter(tags=["auth"])
 
@@ -26,3 +26,7 @@ async def register_user(username: str, password: str):
     db.add(user)
     db.commit()
     return Response('Created User.', 201)
+
+@router.get('/authenicated')
+async def test_authenication(_=Depends(get_user)):
+    return "true"
