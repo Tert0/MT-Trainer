@@ -5,8 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session, Session, Query
-from config import SQL_SERVER_LOCATION, SQL_DATABASE, SQL_USERNAME, SQL_PASSWORD, SQL_ECHO_OUTPUT
-
+from config import SQL_SERVER_LOCATION, SQL_DATABASE, SQL_USERNAME, SQL_PASSWORD, SQL_ECHO_OUTPUT, SQLITE_DATABASE
 T = TypeVar("T")
 
 
@@ -28,15 +27,21 @@ class DB:
         :param echo: whether sql queries should be logged
         """
 
-        protocol, location = location.split("://")
-        self.engine: Engine = create_engine(
-            f"{protocol}://{username}:{password}@{location}/{database}",
-            pool_pre_ping=True,
-            pool_recycle=300,
-            pool_size=10,
-            max_overflow=20,
-            echo=echo,
-        )
+        if not SQLITE_DATABASE:
+            protocol, location = location.split("://")
+            self.engine: Engine = create_engine(
+                f"{protocol}://{username}:{password}@{location}/{database}",
+                pool_pre_ping=True,
+                pool_recycle=300,
+                pool_size=10,
+                max_overflow=20,
+                echo=echo,
+            )
+        else:
+            self.engine: Engine = create_engine(
+                f"sqlite://{location}",
+                echo=echo,
+            )
 
         self._SessionFactory: sessionmaker = sessionmaker(bind=self.engine)
         self._Session = scoped_session(self._SessionFactory)

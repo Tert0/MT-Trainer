@@ -31,7 +31,7 @@ async def token_route(username: str, password: str):
 @router.post("/register")
 async def register_user(username: str, password: str):
     if db.query(User).filter(User.username == username).first():
-        raise HTTPException(status_code=401, detail='Username already exists')
+        raise HTTPException(status_code=409, detail='Username already exists')
     user = User(username, pwd_context.hash(password))
     db.add(user)
     db.commit()
